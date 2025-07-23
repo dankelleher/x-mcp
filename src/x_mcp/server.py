@@ -21,22 +21,15 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("x_mcp")
 
-# Get Twitter API credentials from environment variables
-API_KEY = os.getenv("TWITTER_API_KEY")
-API_SECRET = os.getenv("TWITTER_API_SECRET")
-ACCESS_TOKEN = os.getenv("TWITTER_ACCESS_TOKEN")
-ACCESS_TOKEN_SECRET = os.getenv("TWITTER_ACCESS_TOKEN_SECRET")
+# Get Twitter OAuth 2.0 access token from environment variables
+# Support both X_ and TWITTER_ prefixes for backward compatibility
+ACCESS_TOKEN = os.getenv("X_ACCESS_TOKEN") or os.getenv("TWITTER_ACCESS_TOKEN")
 
-if not all([API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_TOKEN_SECRET]):
-    raise ValueError("Twitter API credentials are required")
+if not ACCESS_TOKEN:
+    raise ValueError("Twitter OAuth 2.0 access token is required")
 
-# Initialize Tweepy client with OAuth 2.0
-client = tweepy.Client(
-    consumer_key=API_KEY,
-    consumer_secret=API_SECRET,
-    access_token=ACCESS_TOKEN,
-    access_token_secret=ACCESS_TOKEN_SECRET
-)
+# Initialize Tweepy client with OAuth 2.0 access token
+client = tweepy.Client(access_token=ACCESS_TOKEN)
 
 # Create the MCP server instance
 server = Server("x_mcp")
@@ -211,7 +204,7 @@ async def handle_publish_draft(arguments: Any) -> Sequence[TextContent]:
         if "content" in draft:
             # Single tweet
             content = draft["content"]
-            response = client.create_tweet(text=content)
+            response = client.create_tweet(text=content, user_auth=False)
             tweet_id = response.data['id']
             logger.info(f"Published tweet ID {tweet_id}")
             # Delete the draft after publishing
@@ -229,9 +222,9 @@ async def handle_publish_draft(arguments: Any) -> Sequence[TextContent]:
             last_tweet_id = None
             for content in contents:
                 if last_tweet_id is None:
-                    response = client.create_tweet(text=content)
+                    response = client.create_tweet(text=content, user_auth=False)
                 else:
-                    response = client.create_tweet(text=content, in_reply_to_tweet_id=last_tweet_id)
+                    response = client.create_tweet(text=content, in_reply_to_tweet_id=last_tweet_id, user_auth=False)
                 last_tweet_id = response.data['id']
                 await asyncio.sleep(1)  # Avoid hitting rate limits
             logger.info(f"Published thread starting with tweet ID {last_tweet_id}")

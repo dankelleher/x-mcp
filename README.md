@@ -1,8 +1,10 @@
-# X(Twitter) MCP server
+# X(Twitter) MCP server - OAuth 2.0 Fork
 
 [![smithery badge](https://smithery.ai/badge/x-mcp)](https://smithery.ai/server/x-mcp)
 
 An MCP server to create, manage and publish X/Twitter posts directly through Claude chat.
+
+**This is a fork of [vidhupv/x-mcp](https://github.com/vidhupv/x-mcp) that uses OAuth 2.0 authentication instead of OAuth 1.0a, requiring only a single access token instead of four credentials.**
 
 <a href="https://glama.ai/mcp/servers/jsxr09dktf">
   <img width="380" height="200" src="https://glama.ai/mcp/servers/jsxr09dktf/badge" alt="X(Twitter) Server MCP server" />
@@ -21,7 +23,7 @@ npx -y @smithery/cli install x-mcp --client claude
 ### Manual Installation
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/x-mcp.git
+git clone https://github.com/dankelleher/x-mcp.git
 ```
 
 2. Install UV globally using Homebrew in Terminal:
@@ -46,26 +48,27 @@ brew install uv
         "x-mcp"
       ],
       "env": {
-        "TWITTER_API_KEY": "your_api_key",
-        "TWITTER_API_SECRET": "your_api_secret",
-        "TWITTER_ACCESS_TOKEN": "your_access_token",
-        "TWITTER_ACCESS_TOKEN_SECRET": "your_access_token_secret"
+        "TWITTER_ACCESS_TOKEN": "your_oauth2_access_token"
       }
     }
   }
 }
 ```
 
-5. Get your X/Twitter API credentials:
+5. Get your X/Twitter OAuth 2.0 Access Token:
    - Go to [X API Developer Portal](https://developer.x.com/en/products/x-api)
    - Create a project
-   - In User Authentication Settings: Set up with Read and Write permissions, Web App type
-   - Set Callback URL to `http://localhost/` and Website URL to `http://example.com/`
-   - Generate and copy all keys and tokens from Keys and Tokens section
+   - In User Authentication Settings: 
+     - Enable OAuth 2.0
+     - Set up with Read and Write permissions, Web App type
+     - Add scopes: `tweet.read`, `tweet.write`, `users.read`
+   - Set Callback URL to your OAuth handler URL
+   - Use OAuth 2.0 Authorization Code Flow with PKCE to obtain an access token
+   - **Note**: This fork only requires the OAuth 2.0 access token, not the consumer keys or OAuth 1.0a tokens
 
 6. Update the config file:
    - Replace `/path/to/x-mcp` with your actual repository path
-   - Add your X/Twitter API credentials
+   - Add your X/Twitter OAuth 2.0 access token
 
 7. Quit Claude completely and reopen it
 
@@ -77,10 +80,19 @@ brew install uv
 * "Publish this draft!"
 * "Delete that draft"
 
+## OAuth 2.0 Changes
+
+This fork simplifies authentication by using OAuth 2.0 instead of OAuth 1.0a:
+
+- **Original**: Required 4 credentials (API Key, API Secret, Access Token, Access Token Secret)
+- **This Fork**: Requires only 1 credential (OAuth 2.0 Access Token)
+- All API calls use `user_auth=False` parameter to enable OAuth 2.0 authentication
+- Supports both `X_ACCESS_TOKEN` and `TWITTER_ACCESS_TOKEN` environment variables
+
 ## Troubleshooting
 
 If not working:
 - Make sure UV is installed globally (if not, uninstall with `pip uninstall uv` and reinstall with `brew install uv`)
 - Or find UV path with `which uv` and replace `"command": "uv"` with the full path
-- Verify all X/Twitter credentials are correct
+- Verify your OAuth 2.0 access token is correct and has the required scopes
 - Check if the x-mcp path in config matches your actual repository location
